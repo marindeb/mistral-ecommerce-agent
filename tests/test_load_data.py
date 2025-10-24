@@ -1,4 +1,4 @@
-from app.load_data import load_data
+from app.agent import load_data
 
 
 def test_load_data_structure():

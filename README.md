@@ -41,6 +41,20 @@ A FastAPI service exposes unified endpoints (`/query`, `/health`, etc.), integra
 
 ---
 
+## Project Structure
+
+```
+mistral-ecommerce-agent/
+├── app/              # Core logic: RAG, Agent, constants
+├── data/             # Synthetic datasets and Chroma index
+├── notebooks/        # Data generation
+├── tests/            # Unit and integration tests
+├── ui/               # (Optional) Streamlit interface
+└── requirements*.txt # Dependencies (base + dev)
+```
+
+---
+
 ## Environment Setup (pyenv + pyenv-virtualenv)
 
 Ensure you have [pyenv](https://github.com/pyenv/pyenv) and [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) installed.
@@ -55,6 +69,19 @@ pyenv local mistral-agent-env
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+---
+
+## Development Setup
+
+For development:
+```bash
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
+The pre-commit hook runs `ruff` automatically to ensure consistent formatting
+and import order before each commit.
 
 ---
 
@@ -101,9 +128,20 @@ API documentation is available at:
 
 ---
 
-## Testing
+## Running Tests
 
-You can test the components manually:
+Unit and integration tests are located in the `tests/` folder.
+Run all tests with:
+
+```bash
+pytest -v
+```
+
+Pytest is configured to recognize the `app/` package via `pytest.ini`.
+
+---
+
+## Manual Component Tests
 
 **RAG pipeline**
 ```bash
@@ -129,4 +167,4 @@ ask_agent("Which categories have the highest return rate?")
 - Integrate guardrails (column access restriction, sandboxed execution).
 - Package and deploy using Docker Compose.
 - Build a Streamlit UI for demonstration.
-
+- Add Dockerized testing (CI/CD ready).
