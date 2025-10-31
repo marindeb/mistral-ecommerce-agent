@@ -15,9 +15,6 @@ import warnings
 import logging
 import os
 import pandas as pd
-from langchain.agents import AgentExecutor
-from langchain_community.llms import Ollama
-from langchain_experimental.agents import create_pandas_dataframe_agent
 
 from app.constants import ORDERS_PATH, PRODUCTS_PATH
 
@@ -58,6 +55,10 @@ def load_data():
 
 def get_pandas_agent():
     """Create and configure the Pandas DataFrame agent with logging and error handling."""
+    from langchain.agents import AgentExecutor
+    from langchain_community.llms import Ollama
+    from langchain_experimental.agents import create_pandas_dataframe_agent
+
     # Setup LLM
     llm = Ollama(model="mistral:instruct", temperature=0)
 
@@ -90,8 +91,8 @@ def ask_agent(question: str):
     """
     agent = get_pandas_agent()
     response = agent.run(question)
-    print(f"\nQuestion: {question}")
-    print(f"Answer: {response}")
+    logging.info(f"\nQuestion: {question}")
+    logging.info(f"Answer: {response}")
     return response
 
 

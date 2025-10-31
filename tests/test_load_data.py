@@ -1,7 +1,7 @@
 from app.agent import load_data
 
 
-def test_load_data_structure():
+def test_load_data_structure() -> None:
     """
     Basic unit test to ensure that the data loading function works properly.
     It checks that:
@@ -14,5 +14,7 @@ def test_load_data_structure():
     assert not df.empty, "DataFrame should not be empty."
 
     # Essential columns must exist
-    for col in ["category", "return_rate"]:
-        assert col in df.columns, f"Missing column: {col}"
+    expected_cols = {"product_id", "late_rate"}
+    assert expected_cols.issubset(
+        df.columns
+    ), f"Missing expected columns: {expected_cols - set(df.columns)}"

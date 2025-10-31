@@ -9,13 +9,11 @@ Enable the LLM to ground its responses in internal product documentation
 by retrieving relevant text chunks before generation.
 """
 
+import logging
 import os
 import pandas as pd
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import Ollama
-from langchain_community.vectorstores import Chroma
 
 from app.constants import CHROMA_DIR, EMBEDDING_MODEL, LLM_MODEL, PRODUCTS_PATH
 
@@ -66,26 +64,29 @@ def build_vectorstore(force_rebuild: bool = False):
     Returns:
         Chroma: Persisted Chroma vector store instance.
     """
+    from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
+    from langchain_community.vectorstores.chroma import Chroma
 
     if os.path.exists(CHROMA_DIR) and not force_rebuild:
-        print("Using existing Chroma index.")
+        logging.info("Using existing Chroma index.")
         return Chroma(
             persist_directory=CHROMA_DIR,
             embedding_function=HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL),
         )
 
-    print("Building new Chroma index...")
+    logging.info("Building new Chroma index...")
     docs = load_documents()
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.create_documents(docs)
 
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    os.makedirs(CHROMA_DIR, exist_ok=True)
     vectorstore = Chroma.from_documents(
         chunks, embedding=embeddings, persist_directory=CHROMA_DIR
     )
     vectorstore.persist()
-    print("Chroma index built and saved.")
+    logging.info("Chroma index built and saved.")
     return vectorstore
 
 
@@ -101,6 +102,8 @@ def get_rag_chain():
     Returns:
         RetrievalQA: Configured LangChain RAG chain.
     """
+    from langchain_community.llms import Ollama
+
     vectorstore = build_vectorstore()
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
     llm = Ollama(model=LLM_MODEL, temperature=0.2)
@@ -131,8 +134,8 @@ def query(question: str):
     """
     chain = get_rag_chain()
     response = chain({"query": question})
-    print("\nQuestion:", question)
-    print("Answer:", response["result"])
+    logging.info("\nQuestion:", question)
+    logging.info("Answer:", response["result"])
     return response
 
 
