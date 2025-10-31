@@ -25,7 +25,7 @@ def client():
 
 
 # --- Tests ---
-def test_health_endpoint(client) -> None:
+def test_health_endpoint(client):
     """
     Ensure the health endpoint returns status 200 and correct message.
     """
@@ -34,7 +34,7 @@ def test_health_endpoint(client) -> None:
     assert response.json() == {"status": "ok"}
 
 
-def test_query_rag(monkeypatch, client) -> None:
+def test_query_rag(monkeypatch, client):
     """
     Test `/query` endpoint in RAG mode.
     Ensures it returns the mocked RAG response and status 200.
@@ -42,8 +42,10 @@ def test_query_rag(monkeypatch, client) -> None:
 
     import logging
 
-    def mock_query(question: str) -> dict:
-        logging.info("⚠️ MOCK RAG USED ⚠️")
+    logger = logging.getLogger(__name__)
+
+    def mock_query(question: str):
+        logger.info("⚠️ MOCK RAG USED ⚠️")
         return {
             "result": "Mocked RAG answer",
             "query": "Mocked RAG query",
@@ -63,13 +65,13 @@ def test_query_rag(monkeypatch, client) -> None:
     assert "result" in data["answer"]
 
 
-def test_query_agent(monkeypatch, client) -> None:
+def test_query_agent(monkeypatch, client):
     """
     Test `/query` endpoint in Agent mode.
     Ensures it returns the mocked Agent response and status 200.
     """
 
-    def mock_ask_agent(question: str) -> str:  # noqa: ARG001
+    def mock_ask_agent(question: str):  # noqa: ARG001
         return "Mocked Agent answer"
 
     monkeypatch.setattr("app.agent.ask_agent", mock_ask_agent)

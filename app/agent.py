@@ -11,12 +11,16 @@ on demand, without predefining every possible aggregation.
 """
 
 import warnings
+from typing import Any
 
 import logging
 import os
 import pandas as pd
 
-from app.constants import ORDERS_PATH, PRODUCTS_PATH
+from app import constants
+
+
+logger = logging.getLogger(__name__)
 
 
 # Configure basic logging
@@ -29,19 +33,21 @@ logging.basicConfig(
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-def load_data():
+def load_data() -> pd.DataFrame:
     """
     Load and merge product and order datasets into a single analytical DataFrame.
 
-    Business logic:
-    - Expose a structured, aggregated view of the e-commerce data for safe reasoning.
-    - Compute lightweight features such as `late_rate` (percentage of late deliveries)
-      to provide the LLM with stable, interpretable signals for the most common metrics.
-    - This serves as minimal feature engineering: the agent can still compute
-      additional aggregations dynamically, but avoids recomputing trivial statistics.
+    The function combines product and order data to expose a structured,
+    analysis-ready view for the LLM. It computes lightweight derived features
+    such as `late_rate` (percentage of late deliveries) to provide interpretable
+    metrics for reasoning and analytics.
+
+    Returns:
+        pd.DataFrame: Merged DataFrame containing product information and
+        delivery performance metrics, including `late_rate`.
     """
-    df_products = pd.read_csv(PRODUCTS_PATH)
-    df_orders = pd.read_csv(ORDERS_PATH)
+    df_products = pd.read_csv(constants.PRODUCTS_PATH)
+    df_orders = pd.read_csv(constants.ORDERS_PATH)
 
     late_rate = (
         df_orders.groupby("product_id")["delivered_late"]
@@ -53,8 +59,18 @@ def load_data():
     return df
 
 
-def get_pandas_agent():
-    """Create and configure the Pandas DataFrame agent with logging and error handling."""
+def get_pandas_agent() -> Any:
+    """
+    Create and configure a Pandas DataFrame agent powered by Mistral (via Ollama).
+
+    The agent allows natural-language analytical queries over tabular data.
+    It loads the merged dataset from `load_data()`, initializes an Ollama LLM,
+    and wraps it with a Pandas agent for structured reasoning on the data.
+
+    Returns:
+        AgentExecutor: Configured LangChain agent capable of executing
+        natural-language analytical queries on the e-commerce dataset.
+    """
     from langchain.agents import AgentExecutor
     from langchain_community.llms import Ollama
     from langchain_experimental.agents import create_pandas_dataframe_agent
@@ -79,7 +95,7 @@ def get_pandas_agent():
     return agent
 
 
-def ask_agent(question: str):
+def ask_agent(question: str) -> str:
     """
     Query the Pandas Agent with a natural language question.
 
@@ -91,8 +107,8 @@ def ask_agent(question: str):
     """
     agent = get_pandas_agent()
     response = agent.run(question)
-    logging.info(f"\nQuestion: {question}")
-    logging.info(f"Answer: {response}")
+    logger.info(f"\nQuestion: {question}")
+    logger.info(f"Answer: {response}")
     return response
 
 

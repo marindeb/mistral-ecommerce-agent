@@ -9,24 +9,33 @@ Enable the LLM to ground its responses in internal product documentation
 by retrieving relevant text chunks before generation.
 """
 
+from typing import Any, Dict, List
+
 import logging
 import os
 import pandas as pd
 from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-from app.constants import CHROMA_DIR, EMBEDDING_MODEL, LLM_MODEL, PRODUCTS_PATH
+from app import constants
 
 
-def load_documents():
+logger = logging.getLogger(__name__)
+
+
+def load_documents() -> List[str]:
     """
     Convert each product entry into a textual document suitable for embedding.
 
     Each product is represented as a descriptive text block containing
     structured information (category, price, rating, delivery time, etc.).
     These are later embedded for semantic retrieval.
+
+    Returns:
+        List[str]: List of formatted product descriptions, where each string
+        represents a product document ready for embedding (one per product).
     """
-    df = pd.read_csv(PRODUCTS_PATH)
+    df = pd.read_csv(constants.PRODUCTS_PATH)
     docs = []
 
     for _, row in df.iterrows():
@@ -44,7 +53,7 @@ def load_documents():
     return docs
 
 
-def build_vectorstore(force_rebuild: bool = False):
+def build_vectorstore(force_rebuild: bool = False) -> Any:
     """
     Build or load a Chroma vector store containing product embeddings.
 
@@ -67,30 +76,32 @@ def build_vectorstore(force_rebuild: bool = False):
     from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
     from langchain_community.vectorstores.chroma import Chroma
 
-    if os.path.exists(CHROMA_DIR) and not force_rebuild:
-        logging.info("Using existing Chroma index.")
+    if os.path.exists(constants.CHROMA_DIR) and not force_rebuild:
+        logger.info("Using existing Chroma index.")
         return Chroma(
-            persist_directory=CHROMA_DIR,
-            embedding_function=HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL),
+            persist_directory=constants.CHROMA_DIR,
+            embedding_function=HuggingFaceEmbeddings(
+                model_name=constants.EMBEDDING_MODEL
+            ),
         )
 
-    logging.info("Building new Chroma index...")
+    logger.info("Building new Chroma index...")
     docs = load_documents()
 
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.create_documents(docs)
 
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-    os.makedirs(CHROMA_DIR, exist_ok=True)
+    embeddings = HuggingFaceEmbeddings(model_name=constants.EMBEDDING_MODEL)
+    os.makedirs(constants.CHROMA_DIR, exist_ok=True)
     vectorstore = Chroma.from_documents(
-        chunks, embedding=embeddings, persist_directory=CHROMA_DIR
+        chunks, embedding=embeddings, persist_directory=constants.CHROMA_DIR
     )
     vectorstore.persist()
-    logging.info("Chroma index built and saved.")
+    logger.info("Chroma index built and saved.")
     return vectorstore
 
 
-def get_rag_chain():
+def get_rag_chain() -> RetrievalQA:
     """
     Create a RetrievalQA chain combining:
       - Chroma retriever for semantic search
@@ -106,7 +117,7 @@ def get_rag_chain():
 
     vectorstore = build_vectorstore()
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-    llm = Ollama(model=LLM_MODEL, temperature=0.2)
+    llm = Ollama(model=constants.LLM_MODEL, temperature=0.2)
 
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
@@ -117,7 +128,7 @@ def get_rag_chain():
     return qa_chain
 
 
-def query(question: str):
+def query(question: str) -> Dict[str, Any]:
     """
     Execute a user query through the RAG pipeline.
 
@@ -134,8 +145,8 @@ def query(question: str):
     """
     chain = get_rag_chain()
     response = chain({"query": question})
-    logging.info("\nQuestion:", question)
-    logging.info("Answer:", response["result"])
+    logger.info("\nQuestion:", question)
+    logger.info("Answer:", response["result"])
     return response
 
 

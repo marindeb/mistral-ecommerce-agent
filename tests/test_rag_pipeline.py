@@ -7,7 +7,7 @@ from app import constants, rag_pipeline
 
 
 @pytest.fixture(scope="function")
-def clean_index(tmp_path) -> None:  # noqa: ARG001
+def clean_index(tmp_path):  # noqa: ARG001
     """
     Ensure a clean chroma index directory before each test.
     """
@@ -19,7 +19,7 @@ def clean_index(tmp_path) -> None:  # noqa: ARG001
         shutil.rmtree(index_path)
 
 
-def test_rag_pipeline_creates_index(clean_index) -> None:
+def test_rag_pipeline_creates_index(clean_index):
     """
     Test that running the RAG pipeline creates the Chroma index directory.
     """
@@ -29,7 +29,7 @@ def test_rag_pipeline_creates_index(clean_index) -> None:
     assert any(os.scandir(clean_index)), "Chroma index directory is empty"
 
 
-def test_load_documents_returns_strings() -> None:
+def test_load_documents_returns_strings():
     """
     Ensure that `rag_pipeline.load_documents` returns a list of textual items.
     This test validates the preprocessing phase before embedding.
