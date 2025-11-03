@@ -145,6 +145,11 @@ def query(question: str) -> Dict[str, Any]:
     """
     chain = get_rag_chain()
     response = chain({"query": question})
+    # Convert LangChain Document objects to dicts to ensure JSON-serializable response
+    if "source_documents" in response:
+        response["source_documents"] = [
+            doc.dict() for doc in response["source_documents"]
+        ]
     logger.info("\nQuestion:", question)
     logger.info("Answer:", response["result"])
     return response

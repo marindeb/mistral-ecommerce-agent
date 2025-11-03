@@ -19,14 +19,15 @@ def clean_index(tmp_path):  # noqa: ARG001
         shutil.rmtree(index_path)
 
 
-def test_rag_pipeline_creates_index(clean_index):
+def test_build_vectorstore_creates_index(monkeypatch, tmp_path):
     """
     Test that running the RAG pipeline creates the Chroma index directory.
     """
-    os.makedirs(constants.CHROMA_DIR, exist_ok=True)
-    rag_pipeline.get_rag_chain()  # Run the pipeline
-    assert os.path.exists(clean_index), "Chroma index directory was not created"
-    assert any(os.scandir(clean_index)), "Chroma index directory is empty"
+    temp_dir = tmp_path / "chroma_index"
+    monkeypatch.setattr(constants, "CHROMA_DIR", str(temp_dir))
+    rag_pipeline.build_vectorstore(force_rebuild=True)
+    assert temp_dir.exists(), "Chroma index directory was not created"
+    assert len(os.listdir(temp_dir)) > 0, "Chroma index directory is empty"
 
 
 def test_load_documents_returns_strings():
