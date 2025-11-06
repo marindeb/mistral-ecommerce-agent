@@ -1,3 +1,10 @@
+"""
+Module: main.py
+----------------
+Exposes FastAPI interface for querying RAG and agent pipelines.
+Handles request validation and response normalization.
+"""
+
 from typing import Any, Dict
 
 import logging
@@ -102,7 +109,9 @@ def query_endpoint(request: QueryRequest) -> Dict[str, Any]:
             if not IS_TEST:
                 raise HTTPException(status_code=400, detail="Invalid mode")
             else:
-                raise ValueError("Invalid mode")  # simple exception for unit tests
+                raise ValueError(
+                    "Invalid mode"
+                )  # simple exception for unit tests
         return {"mode": mode, "question": question, "answer": answer}
 
     except Exception as e:

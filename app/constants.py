@@ -6,4 +6,11 @@ CHROMA_DIR = f"{DATA_DIR}/chroma_index"
 
 # Model
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-LLM_MODEL = "mistral"
+
+# RAG
+LLM_MODEL_RAG = "mistral"
+TEMPERATURE_RAG = 0.2
+
+# Agent
+LLM_MODEL_AGENT = "mistral:instruct"
+TEMPERATURE_AGENT = 0

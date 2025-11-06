@@ -75,16 +75,13 @@ def get_pandas_agent() -> Any:
     from langchain_community.llms import Ollama
     from langchain_experimental.agents import create_pandas_dataframe_agent
 
-    # Setup LLM
-    llm = Ollama(model="mistral:instruct", temperature=0)
+    llm = Ollama(
+        model=constants.LLM_MODEL_AGENT, temperature=constants.TEMPERATURE_AGENT
+    )
 
-    # Load data
     df = load_data()
-
-    # Create base agent
     base_agent = create_pandas_dataframe_agent(llm, df, verbose=True)
 
-    # Wrap with executor that logs parsing issues instead of crashing
     agent = AgentExecutor.from_agent_and_tools(
         base_agent.agent,
         base_agent.tools,

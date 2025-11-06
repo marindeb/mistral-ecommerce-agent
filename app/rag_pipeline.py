@@ -117,7 +117,9 @@ def get_rag_chain() -> RetrievalQA:
 
     vectorstore = build_vectorstore()
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-    llm = Ollama(model=constants.LLM_MODEL, temperature=0.2)
+    llm = Ollama(
+        model=constants.LLM_MODEL_RAG, temperature=constants.TEMPERATURE_RAG
+    )
 
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
