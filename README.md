@@ -1,43 +1,42 @@
-# Mistral E-commerce Agent
+# Mistral E-commerce Intelligence Agent
 
-A production-grade RAG + Agent system powered by Mistral 7B (via Ollama) and ChromaDB.
-It simulates an internal e-commerce assistant able to query operational data and generate insights such as delivery performance, product returns, and category-level analytics.
+A production-ready RAG + Agent system powered by Mistral 7B (via Ollama) and ChromaDB.
+
+This project simulates an internal e-commerce assistant capable of:
+- Answering product-related questions grounded in internal docs (RAG)
+- Running analytics on operational data (returns, delivery performance…) using a Pandas agent
+- Exposing an API (FastAPI) + optional UI (Streamlit)
 
 ---
 
-## Overview
+## Architecture Overview
 
-This project demonstrates how to design, deploy, and document an end-to-end LLM product:
-- **Retrieval-Augmented Generation (RAG)** for grounding model responses in internal product data.
-- **Pandas Agent** for dynamic analytics and reasoning over structured datasets.
-- **FastAPI backend** for unified API access and orchestration.
-- **Streamlit UI (optional)** for interactive exploration and demos.
+| Component | Purpose |
+|---|---|
+RAG Pipeline | Semantic product knowledge grounded in internal docs
+Pandas Agent | Data analysis + Python execution sandbox
+FastAPI | Unified interface for frontends / automation
+Streamlit UI | Optional demo interface
+ChromaDB | Vector store for embeddings
+Ollama (Mistral) | Local LLM inference
+
+Pipeline:
+
+```
+User Query → Router → RAG OR Pandas Agent → Mistral → Response
+```
 
 ---
 
 ## Tech Stack
 
-- **Language:** Python 3.10.13
-- **LLM:** Mistral 7B via Ollama
-- **Frameworks:** LangChain, ChromaDB, FastAPI, Streamlit
-- **Infrastructure:** Docker, GitHub Actions
-
----
-
-## Architecture & Design Rationale
-
-### RAG Pipeline
-The RAG component retrieves semantically similar text chunks from internal product data
-and uses them to ground Mistral's responses.
-Chunking improves retrieval granularity and prevents context overflow, but may also fragment related information across documents — requiring careful tuning of chunk size and overlap.
-
-### Agent Layer
-The Pandas agent complements the RAG pipeline by allowing the LLM to reason dynamically
-over structured datasets (e.g., delivery performance, return rates).
-It generates and executes Pandas code on demand, making it suitable for exploratory analytics and ad-hoc data queries.
-
-### Backend API
-A FastAPI service exposes unified endpoints (`/query`, `/health`, etc.), integrating both the RAG and agent layers under a consistent interface for frontend or external use.
+- Python 3.10.13
+- Mistral 7B via Ollama
+- LangChain
+- ChromaDB
+- FastAPI + Streamlit
+- Pytest
+- Ruff + Pre-commit
 
 ---
 
@@ -45,115 +44,73 @@ A FastAPI service exposes unified endpoints (`/query`, `/health`, etc.), integra
 
 ```
 mistral-ecommerce-agent/
-├── app/              # Core logic: RAG, Agent, constants
-├── data/             # Synthetic datasets and Chroma index
-├── notebooks/        # Data generation
-├── tests/            # Unit and integration tests
-├── ui/               # (Optional) Streamlit interface
-└── requirements*.txt # Dependencies (base + dev)
+├── app/
+│   ├── agent.py
+│   ├── rag_pipeline.py
+│   ├── main.py
+│   └── constants.py
+├── data/
+├── tests/
+├── ui/
+└── requirements*.txt
 ```
 
 ---
 
-## Environment Setup (pyenv + pyenv-virtualenv)
+## Setup
 
-Ensure you have [pyenv](https://github.com/pyenv/pyenv) and [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) installed.
+### Python Environment
 
 ```bash
-# From the project root
-pyenv install 3.10.13          # if not already installed
+pyenv install 3.10.13
 pyenv virtualenv 3.10.13 mistral-agent-env
 pyenv local mistral-agent-env
 
-# Activate environment and install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
----
+### Dev Tools
 
-## Development Setup
-
-For development:
 ```bash
 pip install -r requirements-dev.txt
 pre-commit install
 ```
 
-The pre-commit hook runs `ruff` automatically to ensure consistent formatting
-and import order before each commit.
-
 ---
 
-## Running Ollama
-
-Ollama must be running locally for the Mistral model to respond.
+## Run Ollama
 
 ```bash
-# Start the Ollama server
-ollama serve
-
-# (optional) Run it in the background
 ollama serve &
-
-# Pull the Mistral model
 ollama pull mistral
 ```
 
-Check that it is active:
-```bash
-curl http://localhost:11434/api/tags
-```
-
 ---
 
-## Usage
+## Run System
 
-1. Generate synthetic e-commerce data:
-   ```bash
-   jupyter notebook notebooks/generate_data.ipynb
-   ```
-2. Build and persist the RAG index:
-   ```bash
-   python -m app.rag_pipeline
-   ```
-3. Launch the FastAPI backend:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-4. Optionally, interact via Streamlit UI.
-
-API documentation is available at:
-[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
----
-
-## Running Tests
-
-Unit and integration tests are located in the `tests/` folder.
-Run all tests with:
-
-```bash
-pytest -v
-```
-
-Pytest is configured to recognize the `app/` package via `pytest.ini`.
-
----
-
-## Manual Component Tests
-
-**RAG pipeline**
+### Build RAG DB
 ```bash
 python -m app.rag_pipeline
 ```
 
-**Pandas agent**
+### API
 ```bash
-python -m app.agent
+uvicorn app.main:app --reload
 ```
 
-Example:
+Docs: http://127.0.0.1:8000/docs
+
+### Streamlit
+```bash
+streamlit run ui/app.py
+```
+
+---
+
+## Use Pandas Agent
+
 ```python
 from app.agent import ask_agent
 ask_agent("Which categories have the highest return rate?")
@@ -161,10 +118,37 @@ ask_agent("Which categories have the highest return rate?")
 
 ---
 
-## Next Steps
+## Tests
+```bash
+pytest -v
+```
 
-- Add lightweight confidence scoring and response logging.
-- Integrate guardrails (column access restriction, sandboxed execution).
-- Package and deploy using Docker Compose.
-- Build a Streamlit UI for demonstration.
-- Add Dockerized testing (CI/CD ready).
+---
+
+## Reset Vector DB
+
+Force rebuild:
+```bash
+python -m app.rag_pipeline --rebuild
+```
+
+Manually clear:
+```bash
+rm -rf data/chroma_index
+```
+
+---
+
+## Roadmap
+
+- Add citations + confidence scores
+- Sandbox execution fully
+- CI/CD + Docker Compose
+- Incremental RAG index updates
+- Multi-model support
+
+---
+
+## License
+
+MIT
