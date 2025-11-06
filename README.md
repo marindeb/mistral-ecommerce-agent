@@ -64,7 +64,7 @@ mistral-ecommerce-agent/
 ```bash
 pyenv install 3.10.13
 pyenv virtualenv 3.10.13 mistral-agent-env
-pyenv local mistral-agent-env
+pyenv activate mistral-agent-env
 
 pip install --upgrade pip
 pip install -r requirements.txt
