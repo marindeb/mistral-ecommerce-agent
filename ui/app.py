@@ -16,9 +16,8 @@ if st.button("Ask"):
             "http://127.0.0.1:8000/query",
             json={"question": question, "mode": mode_param},
         ).json()
-        st.write(f"**Json :** {response}")
 
 st.write(
-    f"**Answer :** {response.get('answer') if response.get('mode') == 'Agent' else response.get('answer').get('result')}"
+    f"**Answer :** {response.get('answer') if response.get('mode') == 'agent' else response.get('answer').get('result')}"
 )
 st.write(f"**Used mode :** {response.get('mode')}")
